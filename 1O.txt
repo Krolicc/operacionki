@@ -3,7 +3,7 @@
 int main() {
     int symbol;
     char file_name[1024];
-    unsigned char buffer[4], data[] = {3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5};
+    unsigned char buffer[4], bytes[] = {3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5};
 
 
     printf("Введите название файла: ");
@@ -11,7 +11,7 @@ int main() {
     printf("\n");
 
     FILE *fp = fopen(file_name, "wb");
-    fwrite(data, sizeof(unsigned char), sizeof(data), fp);
+    fwrite(bytes, sizeof(unsigned char), sizeof(bytes), fp);
     fclose(fp);
 
     fp = fopen(file_name, "rb");
