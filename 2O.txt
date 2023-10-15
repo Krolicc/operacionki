@@ -16,19 +16,19 @@ User* login(User** users, int userCount) {
     int pin;
     printf("Введите логин: ");
     scanf("%s", login);
-    printf("Введите PIN-код: ");
+    printf("Введите pin: ");
     scanf("%d", &pin);
 
     for (int i = 0; i < userCount; i++) {
         User* user = users[i];
-        if (strcmp(user->login, login) == 0 && user->pin == pin) {
+        if (user->pin == pin && strcmp(user->login, login) == 0) {
             printf("Успешная авторизация.\n");
-            printf("\n--- Добро пожаловать, %s! ---", user->login);
+            printf("\n- WELCOME, %s! -", user->login);
             return user;
         }
     }
 
-    printf("Ошибка авторизации.\n");
+    printf("Ошибка при авторизации\n");
     return NULL;
 }
 
