@@ -127,7 +127,7 @@ int main() {
         if (currentUser == NULL) {
             printf("- Что сделать? -\n");
             printf("1. Войти\n");
-            printf("2. ЗАрегестрироваться\n");
+            printf("2. Зарегестрироваться\n");
             printf("3. Выйти\n");
 
             int choice;
