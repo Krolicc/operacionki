@@ -125,7 +125,7 @@ int main() {
 
     while (true) {
         if (currentUser == NULL) {
-            printf("- Меню -\n");
+            printf("- Что сделать? -\n");
             printf("1. Войти\n");
             printf("2. ЗАрегестрироваться\n");
             printf("3. Выйти\n");
