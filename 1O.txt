@@ -18,8 +18,8 @@ int main() {
     while ((symbol = fgetc(fp)) != EOF) {
         printf("Байт: %d\n", symbol);
         printf("Текущая позиция: %ld\n", ftell(fp));
-        printf("Флаги: %d\n\n", fp->_flags);
-        printf("Файловый дескриптор: %d\n", fileno(fp));
+        printf("Флаги: %d\n", fp->_flags);
+        printf("Файловый дескриптор: %d\n\n", fileno(fp));
     }
     fclose(fp);
 
@@ -29,9 +29,8 @@ int main() {
     fclose(fp);
 
     printf("В буфере: ");
-    for (int i = 0; i < sizeof(buffer) / sizeof(unsigned char); i++) {
-        printf("%d ", buffer[i]);
-    }
+    for (int pointer = 0; pointer < sizeof(buffer) / sizeof(unsigned char); pointer++)
+        printf("%d ", buffer[pointer]);
 
     return 0;
 }
