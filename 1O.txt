@@ -1,0 +1,37 @@
+#include <stdio.h>
+
+int main() {
+    int symbol;
+    char file_name[1024];
+    unsigned char buffer[4], data[] = {3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5};
+
+
+    printf("Введите название файла: ");
+    scanf("%s", file_name);
+    printf("\n");
+
+    FILE *fp = fopen(file_name, "wb");
+    fwrite(data, sizeof(unsigned char), sizeof(data), fp);
+    fclose(fp);
+
+    fp = fopen(file_name, "rb");
+    while ((symbol = fgetc(fp)) != EOF) {
+        printf("Байт: %d\n", symbol);
+        printf("Текущая позиция: %ld\n", ftell(fp));
+        printf("Флаги: %d\n\n", fp->_flags);
+        printf("Файловый дескриптор: %d\n", fileno(fp));
+    }
+    fclose(fp);
+
+    fp = fopen(file_name, "rb");
+    fseek(fp, 3, SEEK_SET);
+    fread(buffer, sizeof(unsigned char), sizeof(buffer), fp);
+    fclose(fp);
+
+    printf("В буфере: ");
+    for (int i = 0; i < sizeof(buffer) / sizeof(unsigned char); i++) {
+        printf("%d ", buffer[i]);
+    }
+
+    return 0;
+}

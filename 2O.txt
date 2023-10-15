@@ -1,0 +1,252 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
+
+typedef struct {
+    char login[7];
+    int pin;
+    int command_counter;
+    int limiter;
+} User;
+
+User* login(User** users, int userCount) {
+    char login[7];
+    int pin;
+    printf("Введите логин: ");
+    scanf("%s", login);
+    printf("Введите PIN-код: ");
+    scanf("%d", &pin);
+
+    for (int i = 0; i < userCount; i++) {
+        User* user = users[i];
+        if (strcmp(user->login, login) == 0 && user->pin == pin) {
+            printf("Успешная авторизация.\n");
+            printf("\n--- Добро пожаловать, %s! ---", user->login);
+            return user;
+        }
+    }
+
+    printf("Ошибка авторизации.\n");
+    return NULL;
+}
+
+User* registerUser(User** users, int userCount) {
+    int number = -1, isCorrect_login = 0;
+    if (userCount >= 300) {
+        printf("Достигнуто максимальное количество пользователей\n");
+        return NULL;
+    }
+
+    User* user = malloc(sizeof(User));
+    if (user == NULL) {
+        printf("Ошибка выделения памяти для пользователя\n");
+        return NULL;
+    }
+
+    while(!isCorrect_login) {
+
+        printf("Введите логин (не более 6 символов), состоящий из латиницы и цифр: ");
+        scanf("%s", user->login);
+
+        for(int i=0; strlen(user->login) >= i; i++) {
+            if(strchr("0123456789ABCDEFGHIKLMNOPQRSTVWXYZabcdefghiklmnopqrstvwxyz", user->login[i]) == NULL) {
+                isCorrect_login--;
+                break;
+            }
+        }
+
+        isCorrect_login++;
+
+    }
+
+    while(number < 0 || number > 100000) {
+        printf("Введите PIN-код (от 0 до 100000): ");
+        scanf("%d", &number);
+    }
+
+    user->pin = number;
+    user->command_counter = 0;
+    user->limiter = 100000;
+
+    printf("Пользователь зарегистрирован!\n");
+    return user;
+}
+
+void showTime() {
+    time_t mytime = time(NULL);
+    struct tm *now = localtime(&mytime);
+    printf("Текущее время: %d:%d:%02d\n", now->tm_hour, now->tm_min, now->tm_sec);
+}
+
+void showDate() {
+    time_t mytime = time(NULL);
+    struct tm *now = localtime(&mytime);
+    printf("Текущая дата: %d.%d.%d\n", now->tm_mday, now->tm_mon + 1, now->tm_year + 1900);
+}
+
+void howmuchTime(int day, int month, int year, char* flag) {
+
+    time_t currentTime = time(NULL);
+    struct tm *now = localtime(&currentTime);
+
+    double time_difference = now->tm_mday * 3600 + (now->tm_mon + 1) * 30 * 24 * 3600 + (now->tm_year + 1900) * 365 * 24 * 3600 -
+        day * 3600 - month * 30 * 24 * 3600 - year * 365 * 24 * 3600;
+
+    if (strcmp(flag, "-s") == 0) {
+        printf("Прошло %.0f в секундах\n", time_difference);
+    }
+    else if (strcmp(flag, "-m") == 0) {
+        printf("Прошло приблизительно  %.0f в минутах\n", time_difference / 60);
+    }
+    else if (strcmp(flag, "-h") == 0) {
+        printf("Прошло приблизительно %.0f в часах\n", time_difference / 3600);
+    }
+    else if (strcmp(flag, "-y") == 0) {
+        printf("Прошло приблизительно %.0f в годах\n", time_difference / (3600 * 24 * 365));
+    }
+    else {
+        printf("ДОПУСТИМЫЕ значения флага: -s, -m, -h, -y\n");
+    }
+}
+
+void freeUsers(User** users, int userCount) {
+    for (int i = 0; i < userCount; i++) {
+        free(users[i]);
+    }
+    free(users);
+}
+
+int main() {
+    int userCount = 0;
+    User** users = NULL;
+    User* currentUser = NULL;
+
+    while (true) {
+        if (currentUser == NULL) {
+            printf("--- Меню авторизации ---\n");
+            printf("1. Авторизация\n");
+            printf("2. Регистрация\n");
+            printf("3. Выход\n");
+
+            int choice;
+            scanf("%d", &choice);
+
+            switch (choice) {
+                case 1:
+                    currentUser = login(users, userCount);
+                    break;
+                case 2:
+                    users = realloc(users, (userCount + 1) * sizeof(User*));
+                    users[userCount] = registerUser(users, userCount);
+                    userCount++;
+                    break;
+                case 3:
+                    freeUsers(users, userCount);
+                    return 0;
+                default:
+                    printf("Неверный выбор. Попробуйте снова.\n");
+            }
+        }
+        else {
+            printf("Доступные команды:\n");
+            printf("\tTime - запрос текущего времени\n");
+            printf("\tDate - запрос текущей даты\n");
+            printf("\tHowmuch - запрос прошедшего времени\n");
+            printf("\tLogout - выйти в меню авторизации\n");
+            printf("\tSanctions - установить ограничения на пользователя\n");
+
+            char command[30];
+            scanf("%s", command);
+
+            if (strcmp(command, "Time") == 0) {
+                if(currentUser->command_counter >= currentUser->limiter) {
+                    printf("Лимит комманд достигнут!");
+                }
+                else {
+                    showTime();
+                    currentUser->command_counter++;
+                }
+            }
+            else if (strcmp(command, "Date") == 0) {
+                if(currentUser->command_counter >= currentUser->limiter) {
+                    printf("Лимит комманд достигнут!");
+                }
+                else {
+                    showDate();
+                    currentUser->command_counter++;
+                }
+            }
+            else if (strcmp(command, "Howmuch") == 0) {
+                if(currentUser->command_counter >= currentUser->limiter) {
+                    printf("Лимит комманд достигнут!");
+                }
+                else {
+                    int day=0, month=0, year=0;
+                    char flag[3];
+                    printf("Введите день: ");
+                    scanf("%d", &day);
+                    while(day < 1 || day > 30){
+                        printf("КОРРЕКТНЫЙ ДЕНЬ: ");
+                        scanf("%d", &day);
+                    }
+                    printf("Введите месяц: ");
+                    scanf("%d", &month);
+                    while(month < 1 || month > 12 || month != 2 && day > 27){
+                        printf("КОРРЕКТНЫЙ МЕСЯЦ: ");
+                        scanf("%d", &month);
+                    }
+                    printf("Введите год: ");
+                    scanf("%d", &year);
+                    while(year < 1 || year > 2023){
+                        printf("КОРРЕКТНЫЙ ГОД: ");
+                        scanf("%d", &year);
+                    }
+                    printf("Введите флаг(-s, -m, -h, -y): ");
+                    scanf("%s", flag);
+                    howmuchTime(day, month, year, flag);
+                    currentUser->command_counter++;
+                }
+            }
+            else if (strcmp(command, "Logout") == 0) {
+                currentUser = NULL;
+                printf("Выход из аккаунта.\n");
+            }
+            else if (strcmp(command, "Sanctions") == 0) {
+                char username[7];
+                int number;
+                printf("Введите имя пользователя: ");
+                scanf("%s", username);
+                printf("Введите ограничитель в диапазоне [1, 500]: ");
+                scanf("%d", &number);
+                while(number <= 0 || number > 500) {
+                    printf("ВВЕДИТЕ КОРРЕКТНОЕ ЧИСЛО БОЛЬШЕЕ 0 И МЕНЬШЕЕ 501: ");
+                    scanf("%d", &number);
+                }
+                printf("Введите значение 12345 для подтверждения ограничений: ");
+                int confirmation;
+                scanf("%d", &confirmation);
+                if (confirmation != 12345) {
+
+                    printf("Ограничения не установлены\n");
+                    continue;
+                }
+
+                for (int i = 0; i < userCount; i++) {
+                    User* user = users[i];
+                    if (strcmp(user->login, username) == 0) {
+                        user->limiter = number;
+                    }
+                }
+
+                printf("Ограничения на %s установлены\n", username);
+            }
+            else {
+                printf("Неверная команда. Попробуйте снова\n");
+            }
+        }
+
+        printf("\n");
+    }
+}

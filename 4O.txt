@@ -1,0 +1,116 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void xor8(FILE *file) {
+    int byte, result = 0;
+
+    while ((byte = fgetc(file)) != EOF) {
+        printf("%X", byte);
+        result ^= byte;
+    }
+
+    printf("Результат операции XOR8: %02X\n", result);
+}
+
+void xor32(FILE *file) {
+    int byte, buffer[4] = {0, 0, 0, 0}, counter=0;
+
+    while ((byte = fgetc(file)) != EOF) {
+        buffer[counter] ^= byte;
+        counter++;
+        if(counter == 4) counter = 0;
+    }
+
+    printf("Результат операции XOR32: %02X%02X%02X%02X\n", buffer[0], buffer[1], buffer[2], buffer[3]);
+}
+
+void print_mask(FILE *file, char *mask) {
+
+    int word_counter = 0, count=0;
+    char number[8] = "", extra_number[2], symbol;
+
+    while ((symbol = fgetc(file)) != EOF) {
+
+        sprintf(extra_number, "%X", symbol);
+
+        number[word_counter] = extra_number[0];
+        number[word_counter+1] = extra_number[1];
+
+        word_counter += 2;
+        if(word_counter == 8) {
+
+            for(int i=0; i<8; i++) {
+                if(mask[i] == '0' || mask[i] == number[i]) {}
+                else {
+                    count--;
+                    break;
+                }
+            }
+
+            count++;
+
+            for(int i=0; i<=7; ++i){
+                number[i] = '\0';
+            }
+
+            word_counter = 0;
+        }
+    }
+
+    printf("Количество чисел, соответствующих маске %s: %d\n", mask, count);
+}
+
+int main() {
+
+    char name_file[1024], flag[1024], symbols8_mask[] = "00000000", user_mask[1024];
+    int file_isOpen = 0;
+
+    FILE *file;
+
+    while(!file_isOpen) {
+        file = fopen(name_file, "rb");
+
+        if (file == NULL) {
+            printf("Введите КОРРЕКТНОЕ название файла: ");
+            scanf("%s", name_file);
+        } else{
+            file_isOpen = 1;
+        }
+    }
+
+    printf("Введите флаг (xor8, xor32, mask): ");
+    scanf("%s", flag);
+
+    if (strcmp(flag, "xor8") == 0) {
+        xor8(file);
+    } else if (strcmp(flag, "xor32") == 0) {
+        xor32(file);
+    } else if (strcmp(flag, "mask") == 0) {
+
+        printf("Необходимо указать маску 8 символов (в 16-ричной системе счисления): ");
+        scanf("%s", user_mask);
+
+        if(strlen(user_mask) >= 9) {
+            printf("В маске больше 8 символов");
+            return 1;
+        } else {
+            int pointer = strlen(user_mask)-1;
+            for(int i=7; i>=0; i--) {
+               symbols8_mask[i] = user_mask[pointer];
+               pointer--;
+               if(pointer <= 0) break;
+            }
+        }
+
+        print_mask(file, symbols8_mask);
+    } else {
+        printf("Неправильный флаг операции\n");
+        fclose(file);
+        return 1;
+    }
+
+    fclose(file);
+
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <stdio.h>
+
+int main() {
+    char name_input_file[1024], name_destination_file[1024];
+    int file_isOpen = 0;
+
+    printf("Введите имя входного файла: ");
+    scanf("%s", name_input_file);
+
+    printf("Введите имя выходного файла: ");
+    scanf("%s", name_destination_file);
+
+    FILE *input_file;
+
+    while(!file_isOpen) {
+        input_file = fopen(name_input_file, "rb");
+
+        if (input_file == NULL) {
+            printf("Введите КОРРЕКТНОЕ название входного файла: ");
+            scanf("%s", name_input_file);
+        } else{
+            file_isOpen = 1;
+        }
+    }
+
+    file_isOpen = 0;
+
+    FILE *destination_file;
+
+    while(!file_isOpen) {
+        destination_file = fopen(name_destination_file, "wb");
+
+        if (destination_file == NULL) {
+            printf("Введите КОРРЕКТНОЕ название выходного файла: ");
+            scanf("%s", name_destination_file);
+        } else{
+            file_isOpen = 1;
+        }
+    }
+
+    char buffer[1024];
+    size_t bytesRead;
+
+    while ((bytesRead = fread(buffer, sizeof(char), sizeof(buffer), input_file)) > 0) {
+        fwrite(buffer, sizeof(char), bytesRead, destination_file);
+    }
+
+    fclose(input_file);
+    fclose(destination_file);
+
+    printf("Копирование успешно завершено\n");
+
+    return 0;
+}
