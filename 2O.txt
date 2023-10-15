@@ -11,7 +11,7 @@ typedef struct {
     int limiter;
 } User;
 
-User* login(User** users, int userCount) {
+User* login(User** users, int user_count) {
     char login[7];
     int pin;
     printf("Введите логин: ");
@@ -19,7 +19,7 @@ User* login(User** users, int userCount) {
     printf("Введите pin: ");
     scanf("%d", &pin);
 
-    for (int i = 0; i < userCount; i++) {
+    for (int i = 0; i < user_count; i++) {
         User* user = users[i];
         if (user->pin == pin && strcmp(user->login, login) == 0) {
             printf("Успешная авторизация.\n");
@@ -32,9 +32,9 @@ User* login(User** users, int userCount) {
     return NULL;
 }
 
-User* registerUser(User** users, int userCount) {
+User* registerUser(User** users, int user_count) {
     int number = -1, isCorrect_login = 0;
-    if (userCount >= 300) {
+    if (user_count >= 300) {
         printf("Достигнуто максимальное количество пользователей\n");
         return NULL;
     }
@@ -111,15 +111,15 @@ void howmuchTime(int day, int month, int year, char* flag) {
     }
 }
 
-void freeUsers(User** users, int userCount) {
-    for (int i = 0; i < userCount; i++) {
+void freeUsers(User** users, int user_count) {
+    for (int i = 0; i < user_count; i++) {
         free(users[i]);
     }
     free(users);
 }
 
 int main() {
-    int userCount = 0;
+    int user_count = 0;
     User** users = NULL;
     User* currentUser = NULL;
 
@@ -135,15 +135,15 @@ int main() {
 
             switch (choice) {
                 case 1:
-                    currentUser = login(users, userCount);
+                    currentUser = login(users, user_count);
                     break;
                 case 2:
-                    users = realloc(users, (userCount + 1) * sizeof(User*));
-                    users[userCount] = registerUser(users, userCount);
-                    userCount++;
+                    users = realloc(users, (user_count + 1) * sizeof(User*));
+                    users[user_count] = registerUser(users, user_count);
+                    user_count++;
                     break;
                 case 3:
-                    freeUsers(users, userCount);
+                    freeUsers(users, user_count);
                     return 0;
                 default:
                     printf("Неверный выбор. Попробуйте снова.\n");
@@ -233,7 +233,7 @@ int main() {
                     continue;
                 }
 
-                for (int i = 0; i < userCount; i++) {
+                for (int i = 0; i < user_count; i++) {
                     User* user = users[i];
                     if (strcmp(user->login, username) == 0) {
                         user->limiter = number;
