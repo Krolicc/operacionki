@@ -1,54 +1,78 @@
 #include <stdio.h>
+#include <Windows.h>
 
-int main() {
-    char name_input_file[1024], name_destination_file[1024];
-    int file_isOpen = 0;
+typedef enum {
+    SUCCESS = 0,
+    INCORRECT_NUMBER_ARGUMENTS_INPUT,
+    FILE_OPENING_ERROR,
+    FILE_READING_ERROR,
+    FILE_WRITING_ERROR,
+    FILE_CLOSING_ERROR,
+    UNKNOWN_ERROR
+} ErrorCode;
 
-    printf("Введите имя входного файла: ");
-    scanf("%s", name_input_file);
+static const char* errorMessages[] = {
+        "Всё хорошо",
+        "Некорректное кол-во аргументов, попробуйте ещё раз",
+        "Ошибка открытия файла",
+        "Ошибка чтения файла",
+        "Ошибка записи файла",
+        "Ошибка закрытия файла",
+        "Неизвестная ошибка, что-то пошло не так"
+};
 
-    printf("Введите имя выходного файла: ");
-    scanf("%s", name_destination_file);
+int main(int argc, char *argv[]) {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
 
-    FILE *input_file;
-
-    while(!file_isOpen) {
-        input_file = fopen(name_input_file, "rb");
-
-        if (input_file == NULL) {
-            printf("Введите КОРРЕКТНОЕ название входного файла: ");
-            scanf("%s", name_input_file);
-        } else{
-            file_isOpen = 1;
-        }
+    if(argc != 3) {
+        printf("%s", errorMessages[INCORRECT_NUMBER_ARGUMENTS_INPUT]);
+        return INCORRECT_NUMBER_ARGUMENTS_INPUT;
     }
 
-    file_isOpen = 0;
+    FILE *input_file = fopen(argv[1], "rb");
+
+    if (input_file == NULL) {
+        printf("%s", errorMessages[FILE_OPENING_ERROR]);
+        return FILE_OPENING_ERROR;
+    }
 
     FILE *destination_file;
 
-    while(!file_isOpen) {
-        destination_file = fopen(name_destination_file, "wb");
+    destination_file = fopen(argv[2], "wb");
 
-        if (destination_file == NULL) {
-            printf("Введите КОРРЕКТНОЕ название выходного файла: ");
-            scanf("%s", name_destination_file);
-        } else{
-            file_isOpen = 1;
-        }
+    if (destination_file == NULL) {
+        printf("%s", errorMessages[FILE_OPENING_ERROR]);
+        return FILE_OPENING_ERROR;
     }
 
     char buffer[1024];
     size_t bytesRead;
 
     while ((bytesRead = fread(buffer, sizeof(char), sizeof(buffer), input_file)) > 0) {
-        fwrite(buffer, sizeof(char), bytesRead, destination_file);
+        if(fwrite(buffer, sizeof(char), bytesRead, destination_file) != bytesRead) {
+            printf ("%s", errorMessages[FILE_WRITING_ERROR]);
+            return FILE_WRITING_ERROR;
+        }
     }
 
-    fclose(input_file);
-    fclose(destination_file);
+    if ( feof (input_file) != 0) {} else {
+        printf("%s", errorMessages[FILE_READING_ERROR]);
+
+        if (fclose (input_file) == EOF || fclose (destination_file) == EOF) {
+            printf ("%s", errorMessages[FILE_CLOSING_ERROR]);
+            return FILE_CLOSING_ERROR;
+        }
+
+        return FILE_READING_ERROR;
+    }
+
+    if (fclose (input_file) == EOF || fclose (destination_file) == EOF) {
+        printf ("%s", errorMessages[FILE_CLOSING_ERROR]);
+        return FILE_CLOSING_ERROR;
+    }
 
     printf("Копирование успешно завершено\n");
 
-    return 0;
+    return SUCCESS;
 }
