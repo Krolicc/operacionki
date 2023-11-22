@@ -3,6 +3,17 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include <Windows.h>
+
+typedef enum {
+    SUCCESS = 0,
+    UNKNOWN_ERROR
+} ErrorCode;
+
+static const char* errorMessages[] = {
+        "Всё хорошо",
+        "Неизвестная ошибка, что-то пошло не так"
+};
 
 typedef struct {
     char login[7];
@@ -11,30 +22,30 @@ typedef struct {
     int limiter;
 } User;
 
-User* login(User** users, int user_count) {
+User* login(User** users, int userCount) {
     char login[7];
     int pin;
     printf("Введите логин: ");
     scanf("%s", login);
-    printf("Введите pin: ");
+    printf("Введите PIN-код: ");
     scanf("%d", &pin);
 
-    for (int i = 0; i < user_count; i++) {
+    for (int i = 0; i < userCount; i++) {
         User* user = users[i];
-        if (user->pin == pin && strcmp(user->login, login) == 0) {
+        if (strcmp(user->login, login) == 0 && user->pin == pin) {
             printf("Успешная авторизация.\n");
-            printf("\n- WELCOME, %s! -", user->login);
+            printf("\n--- Добро пожаловать, %s! ---", user->login);
             return user;
         }
     }
 
-    printf("Ошибка при авторизации\n");
+    printf("Ошибка авторизации.\n");
     return NULL;
 }
 
-User* registerUser(User** users, int user_count) {
+User* registerUser(User** users, int userCount) {
     int number = -1, isCorrect_login = 0;
-    if (user_count >= 300) {
+    if (userCount >= 300) {
         printf("Достигнуто максимальное количество пользователей\n");
         return NULL;
     }
@@ -56,6 +67,8 @@ User* registerUser(User** users, int user_count) {
                 break;
             }
         }
+
+        if(strlen(user->login) > 6) isCorrect_login--;
 
         isCorrect_login++;
 
@@ -111,40 +124,43 @@ void howmuchTime(int day, int month, int year, char* flag) {
     }
 }
 
-void freeUsers(User** users, int user_count) {
-    for (int i = 0; i < user_count; i++) {
+void freeUsers(User** users, int userCount) {
+    for (int i = 0; i < userCount; i++) {
         free(users[i]);
     }
     free(users);
 }
 
 int main() {
-    int user_count = 0;
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
+
+    int userCount = 0;
     User** users = NULL;
     User* currentUser = NULL;
 
     while (true) {
         if (currentUser == NULL) {
-            printf("- Что сделать? -\n");
-            printf("1. Войти\n");
-            printf("2. Зарегестрироваться\n");
-            printf("3. Выйти\n");
+            printf("--- Меню авторизации ---\n");
+            printf("1. Авторизация\n");
+            printf("2. Регистрация\n");
+            printf("3. Выход\n");
 
             int choice;
             scanf("%d", &choice);
 
             switch (choice) {
                 case 1:
-                    currentUser = login(users, user_count);
+                    currentUser = login(users, userCount);
                     break;
                 case 2:
-                    users = realloc(users, (user_count + 1) * sizeof(User*));
-                    users[user_count] = registerUser(users, user_count);
-                    user_count++;
+                    users = realloc(users, (userCount + 1) * sizeof(User*));
+                    users[userCount] = registerUser(users, userCount);
+                    userCount++;
                     break;
                 case 3:
-                    freeUsers(users, user_count);
-                    return 0;
+                    freeUsers(users, userCount);
+                    return SUCCESS;
                 default:
                     printf("Неверный выбор. Попробуйте снова.\n");
             }
@@ -233,7 +249,7 @@ int main() {
                     continue;
                 }
 
-                for (int i = 0; i < user_count; i++) {
+                for (int i = 0; i < userCount; i++) {
                     User* user = users[i];
                     if (strcmp(user->login, username) == 0) {
                         user->limiter = number;
