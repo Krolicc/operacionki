@@ -1,19 +1,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <Windows.h>
 
-void xor8(FILE *file) {
+typedef enum {
+    SUCCESS = 0,
+    INCORRECT_NUMBER_ARGUMENTS_INPUT,
+    INCORRECT_FLAG_INPUT,
+    FILE_OPENING_ERROR,
+    FILE_READING_ERROR = 404,
+    FILE_WRITING_ERROR,
+    FILE_CLOSING_ERROR,
+    UNKNOWN_ERROR
+} ErrorCode;
+
+static const char* errorMessages[] = {
+        "Всё хорошо",
+        "Некорректное кол-во аргументов, попробуйте ещё раз",
+        "Некорректный флаг, попробуйте еще раз",
+        "Ошибка открытия файла",
+        "Ошибка чтения файла",
+        "Ошибка записи файла",
+        "Ошибка закрытия файла",
+        "Неизвестная ошибка, что-то пошло не так"
+};
+
+int xor8(FILE *file) {
     int byte, result = 0;
 
-    while ((byte = fgetc(file)) != EOF) {
-        printf("%X", byte);
-        result ^= byte;
-    }
+    while ((byte = fgetc(file)) != EOF) result ^= byte;
 
-    printf("Результат операции XOR8: %02X\n", result);
+    if ( feof (file) != 0) {} else return FILE_READING_ERROR;
+
+    return result;
 }
 
-void xor32(FILE *file) {
+int xor32(FILE *file) {
     int byte, buffer[4] = {0, 0, 0, 0}, counter=0;
 
     while ((byte = fgetc(file)) != EOF) {
@@ -22,10 +44,14 @@ void xor32(FILE *file) {
         if(counter == 4) counter = 0;
     }
 
-    printf("Результат операции XOR32: %02X%02X%02X%02X\n", buffer[0], buffer[1], buffer[2], buffer[3]);
+    if ( feof (file) != 0) {} else return FILE_READING_ERROR;
+
+    char ans[8];
+    sprintf(ans, "%X%X%X%X", buffer[0], buffer[1], buffer[2], buffer[3]);
+    return atoi(ans);
 }
 
-void print_mask(FILE *file, char *mask) {
+int print_mask(FILE *file, char *mask) {
 
     int word_counter = 0, count=0;
     char number[8] = "", extra_number[2], symbol;
@@ -58,59 +84,73 @@ void print_mask(FILE *file, char *mask) {
         }
     }
 
-    printf("Количество чисел, соответствующих маске %s: %d\n", mask, count);
+    if ( feof (file) != 0) {} else return FILE_READING_ERROR;
+
+    return count;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
 
-    char name_file[1024], flag[1024], symbols8_mask[] = "00000000", user_mask[1024];
-    int file_isOpen = 0;
-
-    FILE *file;
-
-    while(!file_isOpen) {
-        file = fopen(name_file, "rb");
-
-        if (file == NULL) {
-            printf("Введите КОРРЕКТНОЕ название файла: ");
-            scanf("%s", name_file);
-        } else{
-            file_isOpen = 1;
-        }
+    if(argc != 3) {
+        printf("%s", errorMessages[INCORRECT_NUMBER_ARGUMENTS_INPUT]);
+        return INCORRECT_NUMBER_ARGUMENTS_INPUT;
     }
 
-    printf("Введите флаг (xor8, xor32, mask): ");
-    scanf("%s", flag);
+    char symbols8_mask[] = "12314000";
+    int answer;
 
-    if (strcmp(flag, "xor8") == 0) {
-        xor8(file);
-    } else if (strcmp(flag, "xor32") == 0) {
-        xor32(file);
-    } else if (strcmp(flag, "mask") == 0) {
+    FILE *file = fopen(argv[1], "rb");
 
-        printf("Необходимо указать маску 8 символов (в 16-ричной системе счисления): ");
-        scanf("%s", user_mask);
+    if (file == NULL) {
+        printf("%s", errorMessages[FILE_OPENING_ERROR]);
+        return FILE_OPENING_ERROR;
+    }
 
-        if(strlen(user_mask) >= 9) {
-            printf("В маске больше 8 символов");
-            return 1;
-        } else {
-            int pointer = strlen(user_mask)-1;
-            for(int i=7; i>=0; i--) {
-               symbols8_mask[i] = user_mask[pointer];
-               pointer--;
-               if(pointer <= 0) break;
-            }
-        }
+    if (strcmp(argv[2], "xor8") == 0) {
 
-        print_mask(file, symbols8_mask);
+        answer = xor8(file);
+
+        if (answer == FILE_READING_ERROR) {
+            printf("%s", errorMessages[FILE_READING_ERROR-400]);
+            return FILE_READING_ERROR;
+        } else printf("Результат операции XOR8: %02X\n", answer);
+
+    } else if (strcmp(argv[2], "xor32") == 0) {
+
+        answer = xor32(file);
+
+        if (answer == FILE_READING_ERROR) {
+            printf("%s", errorMessages[FILE_READING_ERROR - 400]);
+            return FILE_READING_ERROR;
+        } else {}
+            printf("Результат операции XOR32: %d\n", answer);
+
+    } else if (strcmp(argv[2], "mask") == 0) {
+
+        answer = print_mask(file, symbols8_mask);
+
+        if (answer == FILE_READING_ERROR) {
+            printf("%s", errorMessages[FILE_READING_ERROR-400]);
+            return FILE_READING_ERROR;
+        } else printf("Количество чисел, соответствующих маске %s: %d\n", symbols8_mask, answer);
+
     } else {
-        printf("Неправильный флаг операции\n");
-        fclose(file);
-        return 1;
+        printf("%s", errorMessages[INCORRECT_FLAG_INPUT]);
+
+        if (fclose (file) == EOF) {
+            printf ("%s", errorMessages[FILE_CLOSING_ERROR]);
+            return FILE_CLOSING_ERROR;
+        }
+
+        return INCORRECT_FLAG_INPUT;
     }
 
-    fclose(file);
+    if (fclose(file) == EOF) {
+        printf ("%s", errorMessages[FILE_CLOSING_ERROR]);
+        return FILE_CLOSING_ERROR;
+    }
 
-    return 0;
+    return SUCCESS;
 }
